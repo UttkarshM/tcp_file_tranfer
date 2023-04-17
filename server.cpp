@@ -7,7 +7,7 @@
 #include<cstring>
 #include<string.h>
 #include<chrono>
-#define port 2100
+#define port 9000
 #define size 1024
 #define max_clients 20
 
@@ -21,7 +21,7 @@ struct TIMER{ // for checking the performance of each function
     ~TIMER(){ //deconstructer gets activated when the scope of the function also ends
         end=std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> duration = end - start;
-        std::time_t dur=duration.count()*1000;//we multiplied it by 1000 cause we want in milli seconds.
+        auto dur=duration.count();//we use auto bcs neither double nor float has the range of the time which will be written(in the form of e).
         std::cout<<"time take for the "<<process<<":"<<dur<< "ms"<<std::endl;
     }
 };
@@ -44,19 +44,26 @@ void REUSESOCK(int& sockfd,int opt){
     }
 }
 void BIND(int& sockfd,struct sockaddr_in& server){
-    TIMER timer("bind");
-    if(bind(sockfd,(struct sockaddr*)&server,sizeof(server)<0)){
+    TIMER timer("binding");
+    memset(&server,'\0',sizeof(server));//allocating memory for the server 
+    server.sin_family=AF_INET;
+    server.sin_port=htons(port);
+    server.sin_addr.s_addr=htonl(INADDR_ANY);
+    
+    if(bind(sockfd,(struct sockaddr*)&server,sizeof(server))<0){
         ep("bind");
     }
     std::cout<<"binding was successfull"<<std::endl;
 }
 void LISTEN(int& sockfd){
+    TIMER timer("listening");
     if(listen(sockfd,max_clients)<0){
         ep("listening");
     }
     std::cout<<"device found..."<<std::endl;
 }
 void ACCEPT(int& sockfd,struct sockaddr_in& server,int& newsockfd,socklen_t siz){
+    TIMER timer("accepting");
     siz=sizeof(server);
     newsockfd=accept(sockfd,(struct sockaddr*)&server,&siz);
     if(newsockfd<0){
@@ -68,9 +75,16 @@ void ACCEPT(int& sockfd,struct sockaddr_in& server,int& newsockfd,socklen_t siz)
 void CHAT(){}
 int main(){
     using namespace std::literals::chrono_literals;
-    int sockfd,newsocfd,opt=1;
+    int sockfd,newsockfd,opt=1;
     socklen_t siz;
-    struct sockaddr_in server;
+    struct sockaddr_in server1;
 
     SOCKET(sockfd);
+    REUSESOCK(sockfd,opt);
+    BIND(sockfd,server1);
+    LISTEN(sockfd);
+    ACCEPT(sockfd,server1,newsockfd,siz);
+    close(newsockfd);
+    shutdown(sockfd,SHUT_RDWR);
+    return 0;
 }
