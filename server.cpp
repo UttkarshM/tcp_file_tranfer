@@ -24,7 +24,7 @@ struct TIMER{ // for checking the performance of each function
         end=std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> duration = end - start;
         auto dur=duration.count();//we use auto bcs neither double nor float has the range of the time which will be written(in the form of e).
-        std::cout<<"time take for the "<<process<<":"<<dur<< "ms"<<std::endl;
+        std::cout<<"time take for the "<<process<<":"<<dur<<std::endl;
     }
 };
 void ep(std::string arr){
@@ -73,9 +73,26 @@ void ACCEPT(int& sockfd,struct sockaddr_in& server,int& newsockfd,socklen_t siz)
     }
     std::cout<<"accepted the client..."<<std::endl;
 }
-int getfilenames(std::fstream& file);
+void getfilenames(int& newsockfd,char* buff){
+    std::fstream f_obj;
+    char buffer[size];
+    std::string file(buff);
+    f_obj.open(file,std::ios::in);
+    std::string file_lines;
+    while(getline(f_obj,file_lines)){
+        //sending all the lines in the file to the client.
+        memset(buffer,'\0',sizeof(buffer));
+        strcpy(buffer,file_lines.c_str());
+        write(newsockfd,buffer,sizeof(buffer));
+    }
+    memset(&buffer,'\0',sizeof(buffer));
+    strcpy(buffer,"exit.");
+    write(newsockfd,buffer,sizeof(buffer));//to tell the client that the file has ended
+    f_obj.close();
+}
 
 void CHAT(int& newsockfd){
+    std::fstream f_obj;
     int i=0;
     char buffer[size];
     DIR* dir;
@@ -91,14 +108,17 @@ while(i==0){
         strcpy(buffer,std.c_str());
         if(sizeof(buffer)>3){
         write(newsockfd,buffer,sizeof(buffer));
-        }//some random dots were appearing in output
-        
-        std::cout<<buffer<<std::endl;
+        }//some random dots were appearing in output so tryin to remove them
     }
     closedir(dir);
     memset(&buffer,'\0',sizeof(buffer));
     strcpy(buffer,"exit.");
-    write(newsockfd,buffer,sizeof(buffer));
+    write(newsockfd,buffer,sizeof(buffer));//to tell that the list of files is over
+
+    memset(&buffer,'\0',sizeof(buffer));
+    read(newsockfd,buffer,sizeof(buffer));
+    std::cout<<"required file:"<<buffer<<std::endl;
+    getfilenames(newsockfd,buffer);
     i++;
 }
 }

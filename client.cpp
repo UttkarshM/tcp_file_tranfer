@@ -21,7 +21,7 @@ struct TIMER{ // for checking the performance of each function
         end=std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> duration = end - start;
         auto dur=duration.count();//we used auto as the time takes is very small and not in the range of double or float so we are using this so that it can automatically decide the data type of the time.
-        std::cout<<"time take for the "<<process<<":"<<dur<< "ms"<<std::endl;
+        std::cout<<"time take for the "<<process<<":"<<dur<<std::endl;
     }
 };
 void ep(std::string arr){
@@ -52,8 +52,31 @@ void CONNECT(int& sockfd,struct sockaddr_in& client){
 
 void CHAT(int& sockfd){
     char buffer[size];
-
+    int n=0;
     while(1){   
+    memset(&buffer,'\0',sizeof(buffer));
+    read(sockfd,&buffer,sizeof(buffer));
+    if(strncmp(buffer,"exit.",4)==0){
+        break;
+    }
+    std::cout<<buffer<<"\n";
+    }
+    memset(&buffer,'\0',sizeof(buffer));
+    std::cout<<"enter the file to be sent:";
+    //while((buffer[n++]=getchar())!='\n');//this is not givin correct as it has \n in the end
+    std::string std;
+    std::cin>>std;
+    strcpy(buffer,std.c_str());
+    write(sockfd,buffer,sizeof(buffer));//sends the file required.
+    
+    std::cout<<"\n";
+    std::cout<<"\n";
+    std::cout<<"\n";
+    std::cout<<"\n";
+    std::cout<<"\n";
+    std::cout<<"\n"; // spacing the outputs in the output terminal.
+
+    while(1){//the msg sent now is the file.   
     memset(&buffer,'\0',sizeof(buffer));
     read(sockfd,&buffer,sizeof(buffer));
     if(strncmp(buffer,"exit.",4)==0){
