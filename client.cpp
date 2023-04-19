@@ -6,7 +6,7 @@
 #include<netdb.h>
 #include<unistd.h>
 #include<chrono>
-#define port 9000
+#define port 8080
 #define size 1024
 #define max_clients 20
 
@@ -50,8 +50,18 @@ void CONNECT(int& sockfd,struct sockaddr_in& client){
     std::cout<<"connection has been established successfully"<<std::endl;
 }
 
-void CHAT(){
-    
+void CHAT(int& sockfd){
+    char buffer[size];
+
+    while(1){   
+    memset(&buffer,'\0',sizeof(buffer));
+    read(sockfd,&buffer,sizeof(buffer));
+    if(strncmp(buffer,"exit.",4)==0){
+        break;
+    }
+    std::cout<<buffer<<"\n";
+    }
+    std::cout<<"connection has ended"<<std::endl;
 }
 
 
@@ -61,7 +71,7 @@ int main(){
     struct sockaddr_in client;
     SOCKET(sockfd);
     CONNECT(sockfd,client);
-    getwchar_unlocked();
+    CHAT(sockfd);
     close(sockfd);
 return 0;
 }

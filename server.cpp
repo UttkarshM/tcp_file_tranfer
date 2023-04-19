@@ -1,13 +1,15 @@
 #include<iostream>
+#include<dirent.h>
 #include<sys/socket.h>
 #include<sys/types.h>
 #include<unistd.h>
 #include<netdb.h>
 #include<arpa/inet.h>
 #include<cstring>
+#include<fstream>
 #include<string.h>
 #include<chrono>
-#define port 9000
+#define port 8080
 #define size 1024
 #define max_clients 20
 
@@ -71,9 +73,37 @@ void ACCEPT(int& sockfd,struct sockaddr_in& server,int& newsockfd,socklen_t siz)
     }
     std::cout<<"accepted the client..."<<std::endl;
 }
+int getfilenames(std::fstream& file);
 
-void CHAT(){}
+void CHAT(int& newsockfd){
+    int i=0;
+    char buffer[size];
+    DIR* dir;
+    struct dirent* en;
+    dir=opendir(".");
+while(i==0){
+        if(dir==NULL){
+        break;
+    }
+    while((en=readdir(dir))!=NULL){
+        std::string std= en->d_name;
+        memset(&buffer,'\0',sizeof(buffer));
+        strcpy(buffer,std.c_str());
+        if(sizeof(buffer)>3){
+        write(newsockfd,buffer,sizeof(buffer));
+        }//some random dots were appearing in output
+        
+        std::cout<<buffer<<std::endl;
+    }
+    closedir(dir);
+    memset(&buffer,'\0',sizeof(buffer));
+    strcpy(buffer,"exit.");
+    write(newsockfd,buffer,sizeof(buffer));
+    i++;
+}
+}
 int main(){
+    std::fstream file;
     using namespace std::literals::chrono_literals;
     int sockfd,newsockfd,opt=1;
     socklen_t siz;
@@ -84,7 +114,12 @@ int main(){
     BIND(sockfd,server1);
     LISTEN(sockfd);
     ACCEPT(sockfd,server1,newsockfd,siz);
+    //getfilenames(file);
+    CHAT(newsockfd);
+    std::cout<<"file transfer complete";
     close(newsockfd);
     shutdown(sockfd,SHUT_RDWR);
+    
+    file.close();
     return 0;
 }
